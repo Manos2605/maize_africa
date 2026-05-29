@@ -9,10 +9,6 @@ import uvicorn
 from sklearn.preprocessing import MinMaxScaler
 
 class LSTMModel(nn.Module):
-    """
-    LSTM Bidirectionnel + Attention
-    Correspond à l'architecture optimisée du notebook.
-    """
     def __init__(self, input_size, hidden_size=64, num_layers=2, dropout=0.3):
         super(LSTMModel, self).__init__()
 
@@ -62,7 +58,7 @@ TARGET            = "producer_price"
 SEQUENCE_LENGTH   = 5
 
 
-encoder             = joblib.load("./model/country_encoder.save")
+encoder = joblib.load("./model/country_encoder.save")
 scalers_per_country = joblib.load("./model/scalers_per_country.save")
 
 # Scaler global pour l'année (utilisé lors du forecast itératif)
@@ -83,8 +79,8 @@ year_scaler = MinMaxScaler()
 year_scaler.fit(dataset[["year"]])
 
 # Scaler global pour country_encoded
-_ce_scaler = MinMaxScaler()
-_ce_scaler.fit(dataset[["country_encoded"]])
+ce_scaler = MinMaxScaler()
+ce_scaler.fit(dataset[["country_encoded"]])
 
 # Dataset normalisé (même pipeline que le notebook)
 dataset_normalized = dataset.copy()
@@ -94,7 +90,7 @@ for country in dataset["country"].unique():
     data   = dataset_normalized.loc[mask, FEATURES_TO_SCALE + [TARGET]].copy()
     dataset_normalized.loc[mask, FEATURES_TO_SCALE + [TARGET]] = scaler.fit_transform(data)
 
-dataset_normalized["country_encoded"] = _ce_scaler.transform(
+dataset_normalized["country_encoded"] = ce_scaler.transform(
     dataset_normalized[["country_encoded"]]
 )
 
@@ -109,7 +105,7 @@ model.eval()
 # API
 app = FastAPI(
     title="Maize Price Forecast API",
-    description="Prédiction du prix du maïs en Afrique (54 pays) via LSTM bidirectionnel.",
+    description="Prédiction du prix du maïs en Afrique (33 pays) via LSTM bidirectionnel.",
     version="2.0.0",
 )
 
@@ -127,6 +123,27 @@ def root():
 @app.get("/countries")
 def list_countries():
     return {"countries": sorted(dataset["country"].unique().tolist())}
+
+
+@app.get("/prices/{country}")
+def get_country_prices(country: str):
+    if country not in dataset["country"].unique():
+        available = sorted(dataset["country"].unique().tolist())
+        return {"error": f"Pays '{country}' inconnu. Pays disponibles : {available}"}
+
+    country_prices = dataset[
+        dataset["country"] == country
+    ][["year", TARGET]].sort_values("year")
+
+    prices = [
+        {"year": int(row["year"]), "price": float(row[TARGET])}
+        for _, row in country_prices.iterrows()
+    ]
+
+    return {
+        "country": country,
+        "prices": prices,
+    }
 
 
 @app.post("/predict")

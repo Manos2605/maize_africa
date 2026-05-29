@@ -1,53 +1,37 @@
-import React, { useState } from "react";
-
-import NavBar from "../components/NavBar";
-import InteractiveAfricaMap from "../components/InteractiveAfricaMap";
-import CountryDetailsPanel from "../components/CountryDetailsPanel";
+import React, { useState } from 'react';
+import NavBar from '../components/NavBar';
+import InteractiveAfricaMap from '../components/InteractiveAfricaMap';
+import CountryDetailsPanel from '../components/CountryDetailsPanel';
 
 const DashboardPage = () => {
-
   const [selectedCountry, setSelectedCountry] = useState(null);
-
-  // Etat navigation
-  const [activeTab, setActiveTab] = useState("dashboard");
-
-  // Etat dark mode
-  const [darkMode, setDarkMode] = useState(true);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
+  const [activeTab, setActiveTab]             = useState('dashboard');
+  const [darkMode, setDarkMode]               = useState(true);
 
   return (
-    <div className={darkMode ? "dark min-h-screen bg-bg-primary" : "min-h-screen bg-white"}>
+    <div className={`${darkMode ? 'dark' : ''} h-screen flex flex-col overflow-hidden bg-bg-primary`}>
 
       <NavBar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         darkMode={darkMode}
-        onToggleDark={toggleDarkMode}
+        onToggleDark={() => setDarkMode(prev => !prev)}
       />
 
-      <div className="
-        p-6
-        grid grid-cols-1 lg:grid-cols-3
-        gap-6
-      ">
+      {/* Corps — prend toute la hauteur restante */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 overflow-hidden min-h-0">
 
-        {/* Carte */}
-        <div className="lg:col-span-2">
+        {/* Carte — 2/3 */}
+        <div className="lg:col-span-2 min-h-0">
           <InteractiveAfricaMap
             selectedCountry={selectedCountry}
             onSelectCountry={setSelectedCountry}
           />
         </div>
 
-        {/* Panel détails */}
-        <div>
-          <CountryDetailsPanel
-            selectedCountry={selectedCountry}
-          />
+        {/* Panel details — 1/3, scrollable en interne */}
+        <div className="min-h-0 overflow-hidden">
+          <CountryDetailsPanel selectedCountry={selectedCountry} />
         </div>
 
       </div>
