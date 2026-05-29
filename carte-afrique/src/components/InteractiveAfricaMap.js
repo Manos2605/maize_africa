@@ -11,20 +11,93 @@ import {
   PRICE_COLORS,
 } from '../data/mockData';
 
-// Carte GeoJSON Afrique
 const GEO_URL =
   'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
 
 export default function InteractiveAfricaMap({
   selectedCountry,
   onSelectCountry,
+  mapScale = 420,
+  mapCenter = [20, 5],
 }) {
-
-  // Retourne la couleur du pays
   const getCountryColor = (countryData) => {
     if (!countryData) {
       return PRICE_COLORS.default;
     }
+    return PRICE_COLORS[countryData.priceLevel] || PRICE_COLORS.default;
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col bg-bg-secondary">
+      {/* Header */}
+      <div className="p-4 border-b border-border">
+        <h2 className="text-lg font-semibold text-text-primary">
+          Carte Interactive de l&apos;Afrique
+        </h2>
+        <p className="text-sm text-text-secondary mt-1">
+          Cliquez sur un pays pour voir les prédictions
+        </p>
+      </div>
+
+      {/* Carte */}
+      <div className="flex-1 flex justify-center items-center overflow-hidden">
+        <ComposableMap
+          projection="geoMercator"
+          projectionConfig={{
+            scale: mapScale,
+            center: mapCenter,
+          }}
+          className="transition-all duration-500"
+        >
+          <Geographies geography={GEO_URL}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const geoName = geo.properties.name;
+                const mappedName = COUNTRY_NAME_MAP[geoName];
+                const countryData = mappedName
+                  ? COUNTRIES_DATA[mappedName]
+                  : null;
+                const isSelected =
+                  selectedCountry?.id === countryData?.id;
+
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={() => {
+                      if (countryData) {
+                        onSelectCountry(countryData);
+                      }
+                    }}
+                    style={{
+                      default: {
+                        fill: getCountryColor(countryData),
+                        stroke: isSelected ? '#FFFFFF' : '#30363D',
+                        strokeWidth: isSelected ? 2 : 0.6,
+                        outline: 'none',
+                        cursor: countryData ? 'pointer' : 'default',
+                        transition: 'all 0.2s ease',
+                      },
+                      hover: {
+                        fill: '#58A6FF',
+                        outline: 'none',
+                        cursor: countryData ? 'pointer' : 'default',
+                      },
+                      pressed: {
+                        fill: '#3FB950',
+                        outline: 'none',
+                      },
+                    }}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </ComposableMap>
+      </div>
+    </div>
+  );
+}
 
     return PRICE_COLORS[countryData.priceLevel] || PRICE_COLORS.default;
   };

@@ -1,70 +1,122 @@
-# Getting Started with Create React App
+# MaizePredict AI - Maize Price Forecasting Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive dashboard for predicting maize prices across African countries using machine learning. Built with React, Recharts, and react-simple-maps.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Interactive Africa Map**: Click on any African country to view predictions
+- **Zoom Animation**: Map smoothly zooms to the selected country
+- **Price Predictions**: LSTM-based predictions using the FastAPI backend
+- **Full-Height Interface**: Optimized for desktop viewing with h-100vh layout
+- **Dark Mode**: Professional dark theme with color-coded country data
+- **Real-time Charts**: Visualize historical and forecasted prices with Recharts
 
-### `npm start`
+## Setup
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Prerequisites
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Node.js (v14+)
+- npm or yarn
+- FastAPI backend running (see Backend Setup below)
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repository
+2. Install dependencies:
 
-### `npm run build`
+```bash
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Configure the API endpoint (optional):
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Create a `.env` file in the project root:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+REACT_APP_API_URL=http://localhost:8000
+```
 
-### `npm run eject`
+### Running the App
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The app will open at [http://localhost:3000](http://localhost:3000).
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Backend Setup
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The app integrates with a FastAPI backend that provides LSTM-based price predictions.
 
-## Learn More
+### FastAPI Requirements
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The backend should expose these endpoints:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `GET /countries` - List available countries
+- `POST /predict` - Get price prediction for a country and year
 
-### Code Splitting
+Request format:
+```json
+{
+  "country": "Nigeria",
+  "year": 2025
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Response format:
+```json
+{
+  "country": "Nigeria",
+  "last_known_year": 2023,
+  "forecast": [
+    {"year": 2024, "predicted_price": 320.50},
+    {"year": 2025, "predicted_price": 335.75}
+  ]
+}
+```
 
-### Analyzing the Bundle Size
+### Running the Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+From the parent directory, start the FastAPI server:
 
-### Making a Progressive Web App
+```bash
+python -m uvicorn api:app --host 127.0.0.1 --port 8000
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Supported Countries
 
-### Advanced Configuration
+Currently supports predictions for:
+- Nigeria
+- Cameroon
+- Kenya
+- Ghana
+- Ethiopia
+- Tanzania
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Architecture
 
-### Deployment
+- **Frontend**: React 18 with Tailwind CSS
+- **Maps**: react-simple-maps with GeoJSON
+- **Charts**: Recharts for data visualization
+- **Styling**: Tailwind CSS with custom design tokens
+- **API**: Axios for backend communication
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Build for Production
 
-### `npm run build` fails to minify
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This creates an optimized production build in the `build` folder.
+
+## Demo Mode
+
+If the FastAPI backend is not available, the app falls back to demo mode with simulated predictions. This allows you to test the UI without the backend running.
+
+## Technologies
+
+- React 18
+- Tailwind CSS
+- Recharts
+- react-simple-maps
+- FastAPI (backend)
