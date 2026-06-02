@@ -71,40 +71,51 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
       )}
 
       {/* Header */}
-      <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-        <div>
-          <h2 className="text-sm font-semibold text-text-primary">Carte interactive de l'Afrique</h2>
-          <p className="text-xs text-text-secondary mt-0.5">Cliquez sur un pays pour afficher les détails</p>
+      <div className="px-3 sm:px-5 py-2.5 border-b border-border flex items-center justify-between flex-shrink-0 gap-2">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-text-primary truncate">
+            Carte interactive de l'Afrique
+          </h2>
+          {/* Sous-titre masqué sur très petit écran */}
+          <p className="text-xs text-text-secondary mt-0.5 hidden sm:block">
+            Cliquez sur un pays pour afficher les détails
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+
+          {/* Bouton retour */}
           {isZoomed && (
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium
                          bg-bg-primary border border-border text-text-secondary
-                         hover:text-text-primary hover:border-accent transition-all duration-200"
+                         hover:text-text-primary hover:border-accent transition-all duration-200 flex-shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 5l-7 7 7 7" />
               </svg>
-              Carte complète
+              <span className="hidden sm:inline">Carte complète</span>
             </button>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-text-secondary">
+          {/* Légende — scrollable horizontalement sur mobile */}
+          <div className="flex items-center gap-2 sm:gap-3 text-xs text-text-secondary overflow-x-auto max-w-[180px] sm:max-w-none">
             {Object.entries(PRICE_COLORS)
               .filter(([key]) => key !== 'default')
               .map(([key, color]) => (
-                <div key={key} className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
-                  <span>{key}</span>
+                <div key={key} className="flex items-center gap-1 flex-shrink-0">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: color }} />
+                  {/* Label masqué sur mobile, seulement les couleurs */}
+                  <span className="hidden sm:inline">{key}</span>
                 </div>
               ))}
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PRICE_COLORS.default }} />
-              <span>N/A</span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-sm flex-shrink-0"
+                style={{ backgroundColor: PRICE_COLORS.default }} />
+              <span className="hidden sm:inline">N/A</span>
             </div>
           </div>
         </div>
@@ -112,7 +123,7 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
 
       {/* Carte */}
       <div
-        className="flex-1 flex items-center justify-center overflow-hidden p-2"
+        className="flex-1 flex items-center justify-center overflow-hidden p-1 sm:p-2"
         onMouseMove={handleMouseMove}
       >
         <ComposableMap
@@ -120,7 +131,7 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
           projectionConfig={{ scale: 420, center: [20, 0] }}
           width={800}
           height={600}
-          className="w-full h-full"
+          style={{ width: '100%', height: '100%' }}
         >
           <ZoomableGroup
             zoom={position.zoom}
@@ -136,7 +147,6 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
                   const mappedName = COUNTRY_NAME_MAP[geoName];
                   const countryData = mappedName ? COUNTRIES_DATA[mappedName] : null;
                   const isSelected = selectedCountry?.id === countryData?.id;
-                  // Nom affiché : nom mappé en français si dispo, sinon nom GeoJSON brut
                   const displayName = mappedName || geoName;
 
                   return (

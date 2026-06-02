@@ -1,3 +1,5 @@
+import React from "react";
+
 const IconDashboard = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -63,57 +65,111 @@ const NAV_LINKS = [
 ];
 
 export default function NavBar({ activeTab, onTabChange, darkMode, onToggleDark }) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
   return (
-    <nav className="flex items-center justify-between px-6 h-14 bg-bg-secondary border-b border-border select-none flex-shrink-0">
+    <nav className="bg-bg-secondary border-b border-border select-none flex-shrink-0">
 
-      {/* Logo */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-accent-green/10 flex items-center justify-center text-accent-green">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
-          </svg>
+      {/* Barre principale */}
+      <div className="flex items-center justify-between px-4 h-14">
+
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-accent-green/10 flex items-center justify-center text-accent-green flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-text-primary font-semibold text-sm">MaizePredict AI</span>
+            <span className="text-text-secondary text-[11px] hidden sm:block">Prediction du prix du mais en Afrique</span>
+          </div>
         </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-text-primary font-semibold text-sm">MaizePredict AI</span>
-          <span className="text-text-secondary text-[11px]">Prediction du prix du mais en Afrique</span>
+
+        {/* Liens — masqués sur mobile */}
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => onTabChange(id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                  transition-all duration-150 relative
+                  ${isActive
+                    ? 'text-accent-green'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
+                  }
+                `}
+              >
+                <Icon />
+                {label}
+                {isActive && (
+                  <span className="absolute -bottom-[17px] left-0 right-0 h-[2px] bg-accent-green rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Droite : dark mode + burger */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onToggleDark}
+            className="w-9 h-9 rounded-lg bg-bg-tertiary hover:bg-bg-hover border border-border flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-150"
+            title={darkMode ? 'Mode clair' : 'Mode sombre'}
+          >
+            {darkMode ? <IconSun /> : <IconMoon />}
+          </button>
+
+          {/* Burger — visible uniquement mobile */}
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            className="md:hidden w-9 h-9 rounded-lg bg-bg-tertiary hover:bg-bg-hover border border-border flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-150"
+            aria-label="Menu"
+          >
+            {menuOpen ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Liens */}
-      <div className="flex items-center gap-1">
-        {NAV_LINKS.map(({ id, label, Icon }) => {
-          const isActive = activeTab === id;
-          return (
-            <button
-              key={id}
-              onClick={() => onTabChange(id)}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                transition-all duration-150 relative
-                ${isActive
-                  ? 'text-accent-green'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
-                }
-              `}
-            >
-              <Icon />
-              {label}
-              {isActive && (
-                <span className="absolute -bottom-[17px] left-0 right-0 h-[2px] bg-accent-green rounded-full" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Toggle dark mode */}
-      <button
-        onClick={onToggleDark}
-        className="w-9 h-9 rounded-lg bg-bg-tertiary hover:bg-bg-hover border border-border flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-150"
-        title={darkMode ? 'Mode clair' : 'Mode sombre'}
-      >
-        {darkMode ? <IconSun /> : <IconMoon />}
-      </button>
+      {/* Menu mobile déroulant */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-border px-4 py-2 flex flex-col gap-1">
+          {NAV_LINKS.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => { onTabChange(id); setMenuOpen(false); }}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                  transition-all duration-150 w-full text-left
+                  ${isActive
+                    ? 'text-accent-green bg-accent-green/5'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
+                  }
+                `}
+              >
+                <Icon />
+                {label}
+                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-green" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
     </nav>
   );
