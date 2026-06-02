@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import NavBar from '../components/NavBar';
 import InteractiveAfricaMap from '../components/InteractiveAfricaMap';
 import CountryDetailsPanel from '../components/CountryDetailsPanel';
+import { loadAllCountries } from '../data/mockData';
 
 const DashboardPage = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [activeTab, setActiveTab]             = useState('dashboard');
   const [darkMode, setDarkMode]               = useState(true);
+  const [countriesData, setCountriesData]     = useState({});
+
+  // ── Charger les 32 pays au montage ──
+  useEffect(() => {
+    const fetchCountries = async () => {
+      const data = await loadAllCountries();
+      console.log(`🌍 Dashboard: Loaded ${Object.keys(data).length} countries from API`);
+      console.log('Country names:', Object.keys(data).sort());
+      setCountriesData(data);
+    };
+    fetchCountries();
+  }, []);
 
   return (
     <div className={`${darkMode ? 'dark' : ''} h-screen flex flex-col overflow-hidden bg-bg-primary`}>
@@ -26,6 +40,7 @@ const DashboardPage = () => {
           <InteractiveAfricaMap
             selectedCountry={selectedCountry}
             onSelectCountry={setSelectedCountry}
+            countriesData={countriesData}
           />
         </div>
 

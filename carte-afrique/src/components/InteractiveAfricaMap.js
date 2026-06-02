@@ -1,11 +1,19 @@
 import React from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
-import { COUNTRIES_DATA, COUNTRY_NAME_MAP, PRICE_COLORS } from '../data/mockData';
+import { COUNTRY_NAME_MAP, PRICE_COLORS, getCountryFromGeoName } from '../data/mockData';
 
 const GEO_URL =
   'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
 
-export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry }) {
+export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry, countriesData }) {
+
+  // Afficher les pays disponibles (debug)
+  React.useEffect(() => {
+    console.log('🗺️ InteractiveAfricaMap loaded with', Object.keys(countriesData).length, 'countries');
+    if (Object.keys(countriesData).length > 0) {
+      console.log('Available countries:', Object.keys(countriesData).sort());
+    }
+  }, [countriesData]);
 
   const getCountryColor = (countryData) => {
     if (!countryData) return PRICE_COLORS.default;
@@ -47,11 +55,37 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
           className="w-full max-w-3xl"
         >
           <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
+            {({ geographies }) => {
+              // Log exhaustif au premier rendu
+              let countMatched = 0;
+              let countNotMatched = 0;
+              const notMatched = [];
+              
+              // Comptabiliser les matchs
+              geographies.forEach((geo) => {
                 const geoName = geo.properties.name;
-                const mappedName = COUNTRY_NAME_MAP[geoName];
-                const countryData = mappedName ? COUNTRIES_DATA[mappedName] : null;
+                const countryData = getCountryFromGeoName(geoName, countriesData, COUNTRY_NAME_MAP);
+                if (countryData) {
+                  countMatched++;
+                } else {
+                  countNotMatched++;
+                  notMatched.push(geoName);
+                }
+              });
+              
+              if (Object.keys(countriesData).length > 0) {
+                console.log(`📊 Matching: ${countMatched} matched, ${countNotMatched} not matched`);
+                if (notMatched.length > 0 && notMatched.length <= 20) {
+                  console.log('❌ Not matched:', notMatched);
+                }
+              }
+              
+              return geographies.map((geo) => {
+                const geoName = geo.properties.name;
+                
+                // Utiliser la fonction de fallback intelligent
+                const countryData = getCountryFromGeoName(geoName, countriesData, COUNTRY_NAME_MAP);
+                
                 const isSelected = selectedCountry?.id === countryData?.id;
 
                 return (
@@ -62,25 +96,25 @@ export default function InteractiveAfricaMap({ selectedCountry, onSelectCountry 
                     className="transition-all duration-200"
                     style={{
                       default: {
-                        fill: getCountryColor(countryData),
+                        fill: countryData ? getCountryColor(countryData) : PRICE_COLORS.default,
                         stroke: isSelected ? '#FFFFFF' : '#30363D',
                         strokeWidth: isSelected ? 2 : 0.5,
                         outline: 'none',
                       },
                       hover: {
-                        fill: '#58A6FF',
+                        fill: countryData ? '#58A6FF' : PRICE_COLORS.default,
                         outline: 'none',
                         cursor: countryData ? 'pointer' : 'default',
                       },
                       pressed: {
-                        fill: '#3FB950',
+                        fill: countryData ? '#3FB950' : PRICE_COLORS.default,
                         outline: 'none',
                       },
                     }}
                   />
                 );
-              })
-            }
+              });
+            }}
           </Geographies>
         </ComposableMap>
       </div>

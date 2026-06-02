@@ -1,8 +1,33 @@
 // src/data/mockData.js
-// Données fictives — à remplacer par les appels API quand le backend sera prêt.
-// Structure identique à ce que l'API devra retourner.
+// Données fixes + chargement dynamique des 33 pays depuis l'API
 
-export const COUNTRIES_DATA = {
+const API_BASE = 'http://127.0.0.1:8000';
+
+// Template par défaut pour les pays sans données spécifiques
+const getDefaultCountryData = (countryName, countryCode) => ({
+  id: countryCode,
+  name: countryName,
+  flag: '🌍',
+  currency: 'USD',
+  unit: 'USD/t',
+  city: 'N/A',
+  priceLevel: 'medium',
+  prixActuel: 0,
+  variation: 0,
+  tendance: 'stable',
+  production: 'N/A',
+  importations: 'N/A',
+  historique: {
+    labels: [],
+    reel: [],
+    prevision: [],
+  },
+  facteurs: [],
+  sparkline: [],
+});
+
+// Données enrichies pour les pays avec mockData détaillées
+const COUNTRIES_DATA_DETAILED = {
   Nigeria: {
     id: 'NGA',
     name: 'Nigeria',
@@ -53,9 +78,9 @@ export const COUNTRIES_DATA = {
     sparkline: [290, 295, 300, 305, 308, 310, 312, 315, 318, 320],
   },
 
-  Cameroun: {
+  Cameroon: {
     id: 'CMR',
-    name: 'Cameroun',
+    name: 'Cameroon',
     flag: '🇨🇲',
     currency: 'XAF',
     unit: 'FCFA/kg',
@@ -191,9 +216,9 @@ export const COUNTRIES_DATA = {
     sparkline: [9.5, 9.4, 9.3, 9.3, 9.2, 9.2, 9.1, 9.1, 9.0, 9.0],
   },
 
-  Ethiopie: {
-    id: 'ETH',
-    name: 'Éthiopie',
+  Ethiopia: {
+    id: 'ETH',  
+    name: 'Ethiopia',
     flag: '🇪🇹',
     currency: 'ETB',
     unit: 'ETB/kg',
@@ -239,7 +264,7 @@ export const COUNTRIES_DATA = {
 
   Tanzania: {
     id: 'TZA',
-    name: 'Tanzanie',
+    name: 'Tanzania',
     flag: '🇹🇿',
     currency: 'TZS',
     unit: 'TZS/kg',
@@ -284,16 +309,68 @@ export const COUNTRIES_DATA = {
   },
 };
 
-// Correspondance nom pays (carte) → clé dans COUNTRIES_DATA
-// Utile quand react-simple-maps retourne des noms en anglais
-export const COUNTRY_NAME_MAP = {
-  'Nigeria':             'Nigeria',
-  'Cameroon':            'Cameroun',
-  'Kenya':               'Kenya',
-  'Ghana':               'Ghana',
-  'Ethiopia':            'Ethiopie',
-  'Tanzania':            'Tanzania',
+// Correspondance nom pays (carte/geojson) → nom de l'API
+// Sera enrichie automatiquement lors du chargement
+export let COUNTRY_NAME_MAP = {
+  // Noms de base (directe match)
+  'Algeria': 'Algeria',
+  'Angola': 'Angola',
+  'Benin': 'Benin',
+  'Botswana': 'Botswana',
+  'Burkina Faso': 'Burkina Faso',
+  'Burundi': 'Burundi',
+  'Cameroon': 'Cameroon',
+  'Cape Verde': 'Cape Verde',
+  'Central African Republic': 'Central African Republic',
+  'Chad': 'Chad',
+  'Comoros': 'Comoros',
+  'Congo': 'Congo',
+  'Democratic Republic of the Congo': 'Congo',
+  'Djibouti': 'Djibouti',
+  'Egypt': 'Egypt',
+  'Equatorial Guinea': 'Equatorial Guinea',
+  'Eritrea': 'Eritrea',
+  'Ethiopia': 'Ethiopia',
+  'Gabon': 'Gabon',
+  'Gambia': 'Gambia',
+  'Ghana': 'Ghana',
+  'Guinea': 'Guinea',
+  'Guinea-Bissau': 'Guinea-Bissau',
+  'Ivory Coast': 'Ivory Coast',
+  'Côte d\'Ivoire': 'Ivory Coast',
+  'Kenya': 'Kenya',
+  'Lesotho': 'Lesotho',
+  'Liberia': 'Liberia',
+  'Libya': 'Libya',
+  'Madagascar': 'Madagascar',
+  'Malawi': 'Malawi',
+  'Mali': 'Mali',
+  'Mauritania': 'Mauritania',
+  'Mauritius': 'Mauritius',
+  'Morocco': 'Morocco',
+  'Mozambique': 'Mozambique',
+  'Namibia': 'Namibia',
+  'Niger': 'Niger',
+  'Nigeria': 'Nigeria',
+  'Rwanda': 'Rwanda',
+  'Sao Tome and Principe': 'Sao Tome and Principe',
+  'Senegal': 'Senegal',
+  'Seychelles': 'Seychelles',
+  'Sierra Leone': 'Sierra Leone',
+  'Somalia': 'Somalia',
+  'South Africa': 'South Africa',
+  'South Sudan': 'South Sudan',
+  'Sudan': 'Sudan',
+  'Swaziland': 'Eswatini',
+  'Eswatini': 'Eswatini',
+  'Tanzania': 'Tanzania',
   'United Republic of Tanzania': 'Tanzania',
+  'Togo': 'Togo',
+  'Tunisia': 'Tunisia',
+  'Uganda': 'Uganda',
+  'Zambia': 'Zambia',
+  'Zimbabwe': 'Zimbabwe',
+  'Western Sahara': 'Western Sahara',
 };
 
 // Couleurs de la légende carte
@@ -313,4 +390,90 @@ export const PRICE_COLORS = {
   low:     '#3FB950',
   vlow:    '#6E7681',
   default: '#21262D',   // pays sans données
+};
+
+// Fonction pour trouver le nom correct du pays dans les données chargées
+export const getCountryFromGeoName = (geoName, countriesData, countryNameMap) => {
+  // 1️⃣ Chercher d'abord dans la map (priorité haute)
+  const mappedName = countryNameMap[geoName];
+  if (mappedName && countriesData[mappedName]) {
+    return countriesData[mappedName];
+  }
+  
+  // 2️⃣ Exact match en minuscules
+  const geoLower = geoName.toLowerCase();
+  for (const [countryName, countryData] of Object.entries(countriesData)) {
+    if (countryName.toLowerCase() === geoLower) {
+      return countryData;
+    }
+  }
+  
+  // 3️⃣ Match partiel par mots-clés
+  const geoWords = geoLower.split(' ').filter(w => w.length > 2);
+  for (const [countryName, countryData] of Object.entries(countriesData)) {
+    const countryLower = countryName.toLowerCase();
+    const countryWords = countryLower.split(' ');
+    if (geoWords.some(word => countryWords.some(cw => cw === word))) {
+      return countryData;
+    }
+  }
+  
+  // 4️⃣ Match partiel (le geojson contient le nom du pays)
+  for (const [countryName, countryData] of Object.entries(countriesData)) {
+    if (geoLower.includes(countryName.toLowerCase()) || countryName.toLowerCase().includes(geoLower)) {
+      return countryData;
+    }
+  }
+  
+  // 5️⃣ Fallback : chercher le premier pays qui contient des mots similaires (Levenshtein-like)
+  const getWords = (str) => str.toLowerCase().split(/[\s\-,;]+/).filter(w => w.length > 2);
+  const geoCountryWords = getWords(geoName);
+  
+  for (const [countryName, countryData] of Object.entries(countriesData)) {
+    const countryWords = getWords(countryName);
+    // Comparer les premiers caractères et les longueurs
+    const hasCommonStart = geoCountryWords.some(gw => 
+      countryWords.some(cw => cw.substring(0, 3) === gw.substring(0, 3))
+    );
+    if (hasCommonStart) {
+      return countryData;
+    }
+  }
+  
+  return null;
+};
+export let COUNTRIES_DATA = { ...COUNTRIES_DATA_DETAILED };
+export let AVAILABLE_COUNTRIES = []; // Liste des pays disponibles depuis l'API
+
+export const loadAllCountries = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/countries`);
+    if (!res.ok) throw new Error('Erreur lors du chargement des pays');
+    const json = await res.json();
+    const countries = json.countries || [];
+
+    // Réinitialiser avec les données détaillées
+    COUNTRIES_DATA = { ...COUNTRIES_DATA_DETAILED };
+    AVAILABLE_COUNTRIES = countries; // Sauvegarder la liste
+
+    // Ajouter les pays retournés par l'API
+    countries.forEach((countryName) => {
+      if (!COUNTRIES_DATA[countryName]) {
+        const code = countryName.toUpperCase().substring(0, 3);
+        COUNTRIES_DATA[countryName] = getDefaultCountryData(countryName, code);
+      }
+      
+      // Enrichir COUNTRY_NAME_MAP : mapper le nom anglais (géojson) vers le nom de l'API
+      if (!COUNTRY_NAME_MAP[countryName]) {
+        COUNTRY_NAME_MAP[countryName] = countryName;
+      }
+    });
+
+    console.log(`✓ ${countries.length} pays disponibles depuis l'API`);
+    console.log('Pays:', countries);
+    return COUNTRIES_DATA;
+  } catch (error) {
+    console.error('Erreur chargement pays:', error);
+    return COUNTRIES_DATA_DETAILED;
+  }
 };
