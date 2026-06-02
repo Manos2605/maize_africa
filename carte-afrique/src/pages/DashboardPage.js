@@ -11,11 +11,11 @@ const DashboardPage = () => {
   const [darkMode, setDarkMode]               = useState(true);
   const [countriesData, setCountriesData]     = useState({});
 
-  // ── Charger les 32 pays au montage ──
+  // Charger les 32 pays au montage
   useEffect(() => {
     const fetchCountries = async () => {
       const data = await loadAllCountries();
-      console.log(`🌍 Dashboard: Loaded ${Object.keys(data).length} countries from API`);
+      console.log(`Dashboard: Loaded ${Object.keys(data).length} countries from API`);
       console.log('Country names:', Object.keys(data).sort());
       setCountriesData(data);
     };

@@ -27,287 +27,7 @@ const getDefaultCountryData = (countryName, countryCode) => ({
 });
 
 // Données enrichies pour les pays avec mockData détaillées
-const COUNTRIES_DATA_DETAILED = {
-  Nigeria: {
-    id: 'NGA',
-    name: 'Nigeria',
-    flag: '🇳🇬',
-    currency: 'NGN',
-    unit: 'NGN/kg',
-    city: 'Abuja',
-    priceLevel: 'medium',       // pour la couleur sur la carte
-    prixActuel: 320,
-    variation: +2.5,
-    tendance: 'hausse',         // 'hausse' | 'baisse' | 'stable'
-    production: '8.5M t',
-    importations: '1.2M t',
-
-    // Graphique 1 — Historique 12 mois (7 passés + 5 prévisions)
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [210, 225, 235, 248, 255, 265, 272, 280, 290, 298, 308, 320],
-      prevision:[null,null,null,null,null,null,null,null, 295, 310, 325, 340],
-    },
-
-    // Graphique 2 — Prévision 6 prochains mois
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [330, 340, 350, 360, 380, 400],
-    },
-
-    // Facteurs influents
-    facteurs: [
-      {
-        icon: '☀️',
-        titre: 'Sécheresse régionale',
-        description: 'Les faibles précipitations dans le nord du pays réduisent les rendements du maïs.',
-      },
-      {
-        icon: '🛢️',
-        titre: 'Prix du pétrole',
-        description: "La hausse du prix du pétrole augmente les coûts de transport et de production.",
-      },
-      {
-        icon: '💱',
-        titre: 'Taux de change USD/NGN',
-        description: "La dépréciation du NGN face au USD impacte les coûts d'importation des intrants.",
-      },
-    ],
-
-    // Sparkline (mini graphique dans la carte prix actuel)
-    sparkline: [290, 295, 300, 305, 308, 310, 312, 315, 318, 320],
-  },
-
-  Cameroon: {
-    id: 'CMR',
-    name: 'Cameroon',
-    flag: '🇨🇲',
-    currency: 'XAF',
-    unit: 'FCFA/kg',
-    city: 'Yaoundé',
-    priceLevel: 'low',
-    prixActuel: 185,
-    variation: +1.1,
-    tendance: 'hausse',
-    production: '1.2M t',
-    importations: '0.1M t',
-
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [165, 168, 170, 172, 174, 176, 178, 179, 181, 182, 183, 185],
-      prevision:[null,null,null,null,null,null,null,null, 183, 186, 190, 195],
-    },
-
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [186, 188, 190, 192, 194, 196],
-    },
-
-    facteurs: [
-      {
-        icon: '☀️',
-        titre: 'Sécheresse Extrême-Nord',
-        description: 'La région Extrême-Nord subit un déficit pluviométrique qui affecte la production.',
-      },
-      {
-        icon: '🏪',
-        titre: 'Marchés locaux tendus',
-        description: 'La demande en maïs dépasse l\'offre sur les marchés de Yaoundé et Douala.',
-      },
-      {
-        icon: '💰',
-        titre: 'Inflation CEMAC',
-        description: 'La légère inflation dans la zone CEMAC pèse sur le pouvoir d\'achat des ménages.',
-      },
-    ],
-
-    sparkline: [178, 179, 180, 181, 182, 182, 183, 183, 184, 185],
-  },
-
-  Kenya: {
-    id: 'KEN',
-    name: 'Kenya',
-    flag: '🇰🇪',
-    currency: 'KES',
-    unit: 'KES/kg',
-    city: 'Nairobi',
-    priceLevel: 'low',
-    prixActuel: 55,
-    variation: +3.2,
-    tendance: 'hausse',
-    production: '3.1M t',
-    importations: '0.8M t',
-
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [40, 42, 44, 46, 48, 49, 50, 51, 52, 53, 54, 55],
-      prevision:[null,null,null,null,null,null,null,null, 53, 56, 60, 64],
-    },
-
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [57, 59, 61, 63, 65, 67],
-    },
-
-    facteurs: [
-      {
-        icon: '🌵',
-        titre: 'Sécheresse Corne de l\'Afrique',
-        description: 'La sécheresse persistante dans la Corne de l\'Afrique réduit fortement les récoltes.',
-      },
-      {
-        icon: '🚛',
-        titre: 'Hausse coûts transport',
-        description: 'La flambée des prix du carburant augmente les coûts logistiques.',
-      },
-      {
-        icon: '📈',
-        titre: 'Inflation alimentaire',
-        description: 'L\'inflation alimentaire au Kenya dépasse 6%, tirant les prix vers le haut.',
-      },
-    ],
-
-    sparkline: [50, 51, 51, 52, 52, 53, 53, 54, 54, 55],
-  },
-
-  Ghana: {
-    id: 'GHA',
-    name: 'Ghana',
-    flag: '🇬🇭',
-    currency: 'GHS',
-    unit: 'GHS/kg',
-    city: 'Accra',
-    priceLevel: 'vlow',
-    prixActuel: 9,
-    variation: -1.2,
-    tendance: 'baisse',
-    production: '2.1M t',
-    importations: '0.3M t',
-
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [10.5, 10.3, 10.1, 10.0, 9.8, 9.7, 9.6, 9.5, 9.4, 9.3, 9.1, 9.0],
-      prevision:[null,null,null,null,null,null,null,null, 9.2, 9.0, 8.8, 8.6],
-    },
-
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [8.8, 8.7, 8.6, 8.5, 8.5, 8.4],
-    },
-
-    facteurs: [
-      {
-        icon: '🌧️',
-        titre: 'Pluviométrie satisfaisante',
-        description: 'Les pluies abondantes cette saison favorisent de bonnes récoltes.',
-      },
-      {
-        icon: '💹',
-        titre: 'Cedi GHS stabilisé',
-        description: 'La stabilisation du Cedi réduit la pression sur les coûts d\'importation.',
-      },
-      {
-        icon: '📉',
-        titre: 'Baisse demande régionale',
-        description: 'La demande régionale en maïs ghanaen est en léger recul.',
-      },
-    ],
-
-    sparkline: [9.5, 9.4, 9.3, 9.3, 9.2, 9.2, 9.1, 9.1, 9.0, 9.0],
-  },
-
-  Ethiopia: {
-    id: 'ETH',  
-    name: 'Ethiopia',
-    flag: '🇪🇹',
-    currency: 'ETB',
-    unit: 'ETB/kg',
-    city: 'Addis-Abeba',
-    priceLevel: 'vlow',
-    prixActuel: 48,
-    variation: +1.8,
-    tendance: 'hausse',
-    production: '9.2M t',
-    importations: '0.4M t',
-
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [40, 41, 42, 43, 44, 44, 45, 45, 46, 46, 47, 48],
-      prevision:[null,null,null,null,null,null,null,null, 47, 49, 51, 53],
-    },
-
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [49, 50, 51, 52, 53, 54],
-    },
-
-    facteurs: [
-      {
-        icon: '🌦️',
-        titre: 'Pluies El Niño',
-        description: 'Les précipitations liées à El Niño sont abondantes cette année.',
-      },
-      {
-        icon: '🌾',
-        titre: 'Saison agricole favorable',
-        description: 'La saison principale Meher s\'annonce productive pour le maïs.',
-      },
-      {
-        icon: '💸',
-        titre: 'Dévaluation ETB',
-        description: 'La récente dévaluation du Birr éthiopien renchérit les intrants importés.',
-      },
-    ],
-
-    sparkline: [45, 45, 46, 46, 46, 47, 47, 47, 48, 48],
-  },
-
-  Tanzania: {
-    id: 'TZA',
-    name: 'Tanzania',
-    flag: '🇹🇿',
-    currency: 'TZS',
-    unit: 'TZS/kg',
-    city: 'Dar es Salaam',
-    priceLevel: 'medium',
-    prixActuel: 750,
-    variation: -0.8,
-    tendance: 'baisse',
-    production: '3.6M t',
-    importations: '0.2M t',
-
-    historique: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.','Jan.','Fév.','Mar.','Avr.','Mai','Juin'],
-      reel:     [790, 785, 780, 775, 772, 768, 765, 762, 758, 755, 752, 750],
-      prevision:[null,null,null,null,null,null,null,null, 755, 748, 742, 736],
-    },
-
-    prevision6mois: {
-      labels: ['Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
-      valeurs: [745, 740, 738, 735, 732, 730],
-    },
-
-    facteurs: [
-      {
-        icon: '🌧️',
-        titre: 'Bonnes précipitations',
-        description: 'Les pluies régulières soutiennent une bonne saison agricole.',
-      },
-      {
-        icon: '🚢',
-        titre: 'Exportations en hausse',
-        description: 'La Tanzanie exporte davantage de maïs vers les pays voisins (+5%).',
-      },
-      {
-        icon: '🏦',
-        titre: 'Taux de change stable',
-        description: 'Le shilling tanzanien reste stable face au dollar américain.',
-      },
-    ],
-
-    sparkline: [758, 757, 756, 755, 754, 753, 752, 752, 751, 750],
-  },
-};
+const COUNTRIES_DATA_DETAILED = {};
 
 // Correspondance nom pays (carte/geojson) → nom de l'API
 // Sera enrichie automatiquement lors du chargement
@@ -392,15 +112,25 @@ export const PRICE_COLORS = {
   default: '#21262D',   // pays sans données
 };
 
+// Fonction pour calculer priceLevel depuis un prix
+export const getPriceLevel = (price) => {
+  if (!price || price <= 0) return 'default';
+  if (price > 400)  return 'vhigh';
+  if (price > 350)  return 'high';
+  if (price > 300)  return 'medium';
+  if (price > 250)  return 'low';
+  return 'vlow';
+};
+
 // Fonction pour trouver le nom correct du pays dans les données chargées
 export const getCountryFromGeoName = (geoName, countriesData, countryNameMap) => {
-  // 1️⃣ Chercher d'abord dans la map (priorité haute)
+  // Chercher d'abord dans la map (priorité haute)
   const mappedName = countryNameMap[geoName];
   if (mappedName && countriesData[mappedName]) {
     return countriesData[mappedName];
   }
   
-  // 2️⃣ Exact match en minuscules
+  // Exact match en minuscules
   const geoLower = geoName.toLowerCase();
   for (const [countryName, countryData] of Object.entries(countriesData)) {
     if (countryName.toLowerCase() === geoLower) {
@@ -408,7 +138,7 @@ export const getCountryFromGeoName = (geoName, countriesData, countryNameMap) =>
     }
   }
   
-  // 3️⃣ Match partiel par mots-clés
+  // Match partiel par mots-clés
   const geoWords = geoLower.split(' ').filter(w => w.length > 2);
   for (const [countryName, countryData] of Object.entries(countriesData)) {
     const countryLower = countryName.toLowerCase();
@@ -418,14 +148,14 @@ export const getCountryFromGeoName = (geoName, countriesData, countryNameMap) =>
     }
   }
   
-  // 4️⃣ Match partiel (le geojson contient le nom du pays)
+  // Match partiel (le geojson contient le nom du pays)
   for (const [countryName, countryData] of Object.entries(countriesData)) {
     if (geoLower.includes(countryName.toLowerCase()) || countryName.toLowerCase().includes(geoLower)) {
       return countryData;
     }
   }
   
-  // 5️⃣ Fallback : chercher le premier pays qui contient des mots similaires (Levenshtein-like)
+  // Fallback : chercher le premier pays qui contient des mots similaires (Levenshtein-like)
   const getWords = (str) => str.toLowerCase().split(/[\s\-,;]+/).filter(w => w.length > 2);
   const geoCountryWords = getWords(geoName);
   
@@ -448,30 +178,89 @@ export let AVAILABLE_COUNTRIES = []; // Liste des pays disponibles depuis l'API
 export const loadAllCountries = async () => {
   try {
     const res = await fetch(`${API_BASE}/countries`);
-    if (!res.ok) throw new Error('Erreur lors du chargement des pays');
     const json = await res.json();
     const countries = json.countries || [];
 
-    // Réinitialiser avec les données détaillées
     COUNTRIES_DATA = { ...COUNTRIES_DATA_DETAILED };
-    AVAILABLE_COUNTRIES = countries; // Sauvegarder la liste
+    AVAILABLE_COUNTRIES = countries;
 
-    // Ajouter les pays retournés par l'API
     countries.forEach((countryName) => {
       if (!COUNTRIES_DATA[countryName]) {
         const code = countryName.toUpperCase().substring(0, 3);
         COUNTRIES_DATA[countryName] = getDefaultCountryData(countryName, code);
       }
-      
-      // Enrichir COUNTRY_NAME_MAP : mapper le nom anglais (géojson) vers le nom de l'API
       if (!COUNTRY_NAME_MAP[countryName]) {
         COUNTRY_NAME_MAP[countryName] = countryName;
       }
     });
 
-    console.log(`✓ ${countries.length} pays disponibles depuis l'API`);
-    console.log('Pays:', countries);
+    // 1. Charger tous les prix en parallèle
+    const pricesResults = await Promise.allSettled(
+      countries.map(async (countryName) => {
+        const r = await fetch(`${API_BASE}/prices/${encodeURIComponent(countryName)}`);
+        const data = await r.json();
+        const prices = (data.prices || []).sort((a, b) => a.year - b.year);
+        const lastEntry = prices[prices.length - 1];
+        const prevEntry = prices[prices.length - 2];
+        const prixActuel = lastEntry?.price ?? null;
+        const variation = (prixActuel && prevEntry?.price)
+          ? ((prixActuel - prevEntry.price) / prevEntry.price * 100)
+          : 0;
+        return { countryName, prixActuel, variation };
+      })
+    );
+
+    // 2. Collecter tous les prix valides
+    const validPrices = pricesResults
+      .filter(r => r.status === 'fulfilled' && r.value.prixActuel !== null)
+      .map(r => r.value);
+
+    // 3. Calculer les seuils par quintiles sur les prix réels
+    const sorted = [...validPrices].sort((a, b) => a.prixActuel - b.prixActuel);
+    const n = sorted.length;
+    const q = (ratio) => sorted[Math.floor(ratio * (n - 1))]?.prixActuel ?? 0;
+
+    const thresholds = {
+      q20: q(0.20),  
+      q40: q(0.40),  
+      q60: q(0.60),  
+      q80: q(0.80),  
+    };
+
+    console.log('Seuils de prix calculés :', thresholds);
+
+    // 4. Assigner priceLevel selon les seuils réels
+    const getPriceLevel = (price) => {
+      if (!price || price <= 0) return 'default';
+      if (price > thresholds.q80) return 'vhigh';
+      if (price > thresholds.q60) return 'high';
+      if (price > thresholds.q40) return 'medium';
+      if (price > thresholds.q20) return 'low';
+      return 'vlow';
+    };
+
+    // 5. Mettre à jour COUNTRIES_DATA avec prix + niveau calculé
+    validPrices.forEach(({ countryName, prixActuel, variation }) => {
+      if (COUNTRIES_DATA[countryName]) {
+        COUNTRIES_DATA[countryName] = {
+          ...COUNTRIES_DATA[countryName],
+          prixActuel,
+          variation,
+          priceLevel: getPriceLevel(prixActuel),
+        };
+      }
+    });
+
+    // 6. Mettre à jour la légende avec les vrais seuils
+    PRICE_LEGEND[0].label = `> ${Math.round(thresholds.q80)}`;
+    PRICE_LEGEND[1].label = `${Math.round(thresholds.q60)} – ${Math.round(thresholds.q80)}`;
+    PRICE_LEGEND[2].label = `${Math.round(thresholds.q40)} – ${Math.round(thresholds.q60)}`;
+    PRICE_LEGEND[3].label = `${Math.round(thresholds.q20)} – ${Math.round(thresholds.q40)}`;
+    PRICE_LEGEND[4].label = `< ${Math.round(thresholds.q20)}`;
+
+    console.log(`✓ ${countries.length} pays chargés avec seuils dynamiques`);
     return COUNTRIES_DATA;
+
   } catch (error) {
     console.error('Erreur chargement pays:', error);
     return COUNTRIES_DATA_DETAILED;
