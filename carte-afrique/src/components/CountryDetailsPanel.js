@@ -136,7 +136,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
       .catch(() => setApiData(null))
       .finally(() => setLoadingHistorique(false));
 
-  }, [selectedCountry?.id]);
+  }, [selectedCountry]);
 
   // Lancer une prédiction manuelle (années > 2026)
   const runPrediction = useCallback(async () => {
