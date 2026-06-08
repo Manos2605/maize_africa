@@ -1,7 +1,8 @@
 // src/data/mockData.js
 // Données fixes + chargement dynamique des 33 pays depuis l'API
 
-const API_BASE = 'http://127.0.0.1:8000';
+/* const API_BASE = 'http://127.0.0.1:8000'; */
+const API_BASE = 'https://iageneratif-model-sonwa.hf.space';
 
 // Template par défaut pour les pays sans données spécifiques
 const getDefaultCountryData = (countryName, countryCode) => ({
