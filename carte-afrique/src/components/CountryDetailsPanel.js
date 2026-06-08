@@ -4,7 +4,8 @@ import {
   ResponsiveContainer, CartesianGrid, ReferenceLine, Legend,
 } from 'recharts';
 
-const API_BASE = 'http://127.0.0.1:8000';
+/* const API_BASE = 'http://127.0.0.1:8000'; */
+const API_BASE = 'https://iageneratif-model-sonwa.hf.space';
 
 const LAST_DATA_YEAR = 2024;
 const CURRENT_YEAR = 2026;
