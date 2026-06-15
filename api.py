@@ -9,8 +9,9 @@ import joblib
 import uvicorn
 from sklearn.preprocessing import MinMaxScaler
 
+
 class LSTMModel(nn.Module):
-    def __init__(self, input_size, hidden_size=64, num_layers=2, dropout=0.3):
+    def __init__(self, input_size, hidden_size=32, num_layers=2, dropout=0.1):
         super(LSTMModel, self).__init__()
 
         self.lstm = nn.LSTM(
@@ -21,87 +22,94 @@ class LSTMModel(nn.Module):
             dropout=dropout,
             bidirectional=True,
         )
-        lstm_out_size = hidden_size * 2  # bidirectionnel
 
-        # Attention sur les pas de temps
+        lstm_out_size = hidden_size * 2
         self.attention = nn.Linear(lstm_out_size, 1)
 
-        self.bn   = nn.BatchNorm1d(lstm_out_size)
+        self.bn = nn.BatchNorm1d(lstm_out_size)
         self.drop = nn.Dropout(dropout)
 
-        # Tête de régression
         self.fc1 = nn.Linear(lstm_out_size, 32)
-        self.act  = nn.ReLU()
-        self.fc2  = nn.Linear(32, 1)
+        self.act = nn.ReLU()
+        self.fc2 = nn.Linear(32, 1)
 
     def forward(self, x):
-        lstm_out, _ = self.lstm(x)                                     # (batch, seq, hidden*2)
-        attn_weights = torch.softmax(self.attention(lstm_out), dim=1)  # (batch, seq, 1)
-        context = (attn_weights * lstm_out).sum(dim=1)                 # (batch, hidden*2)
+        lstm_out, _ = self.lstm(x)
+
+        attn_weights = torch.softmax(self.attention(lstm_out), dim=1)
+        context = (attn_weights * lstm_out).sum(dim=1)
+
         out = self.bn(context)
         out = self.drop(out)
         out = self.act(self.fc1(out))
         out = self.fc2(out)
         return out
 
+
 FEATURES = [
     "country_encoded",
     "year",
-    "production_tonnes",
-    "yield_t_ha",
-    "price_lag1",
-    "price_lag2",
-    "price_delta",
+    "rainfall_mm",
+    "avg_temp_c",
+    "harvested_area_ha",
+    "yield_t_ha_lag1",
+    "yield_t_ha_lag2",
+    "yield_t_ha_lag3",
+    "yield_t_ha_delta",
 ]
 
-FEATURES_TO_SCALE = [f for f in FEATURES if f != "country_encoded"]
-TARGET            = "producer_price"
-SEQUENCE_LENGTH   = 5
+TARGET = "yield_t_ha"
+SEQUENCE_LENGTH = 3
 
 
 encoder = joblib.load("./model/country_encoder.save")
 scalers_per_country = joblib.load("./model/scalers_per_country.save")
 
-# Scaler global pour l'année (utilisé lors du forecast itératif)
-dataset = pd.read_csv("./data/maize_final.csv")
+dataset = pd.read_csv("./data/maize_dataset_africa_full.csv")
 dataset["country_encoded"] = encoder.transform(dataset["country"])
 
-# Lag features — reconstruire comme dans le notebook
 dataset = dataset.sort_values(["country", "year"])
-dataset["price_lag1"]  = dataset.groupby("country")[TARGET].shift(1)
-dataset["price_lag2"]  = dataset.groupby("country")[TARGET].shift(2)
-dataset["price_delta"] = dataset.groupby("country")[TARGET].diff()
+
+dataset["yield_t_ha_lag1"] = dataset.groupby("country")[TARGET].shift(1)
+dataset["yield_t_ha_lag2"] = dataset.groupby("country")[TARGET].shift(2)
+dataset["yield_t_ha_lag3"] = dataset.groupby("country")[TARGET].shift(3)
+dataset["yield_t_ha_delta"] = dataset.groupby("country")[TARGET].diff()
+
 dataset = dataset.groupby("country", group_keys=False).apply(
     lambda g: g.fillna(method="ffill").fillna(method="bfill")
 ).reset_index(drop=True)
 
-# Scaler global pour normaliser l'année lors du forecast
-year_scaler = MinMaxScaler()
-year_scaler.fit(dataset[["year"]])
 
-# Scaler global pour country_encoded
-ce_scaler = MinMaxScaler()
-ce_scaler.fit(dataset[["country_encoded"]])
+features_to_scale = [f for f in FEATURES if f != "country_encoded"]
 
-# Dataset normalisé (même pipeline que le notebook)
 dataset_normalized = dataset.copy()
+
 for country in dataset["country"].unique():
     mask = dataset_normalized["country"] == country
     scaler = scalers_per_country[country]
-    data   = dataset_normalized.loc[mask, FEATURES_TO_SCALE + [TARGET]].copy()
-    dataset_normalized.loc[mask, FEATURES_TO_SCALE + [TARGET]] = scaler.fit_transform(data)
 
-dataset_normalized["country_encoded"] = ce_scaler.transform(
+    dataset_normalized.loc[
+        mask,
+        features_to_scale + [TARGET]
+    ] = scaler.transform(
+        dataset_normalized.loc[mask, features_to_scale + [TARGET]]
+    )
+
+# country_encoded scaling
+ce_scaler = MinMaxScaler()
+dataset_normalized["country_encoded"] = ce_scaler.fit_transform(
     dataset_normalized[["country_encoded"]]
 )
 
-# Modèle
-input_size = len(FEATURES)
-model = LSTMModel(input_size=input_size)
-model.load_state_dict(
-    torch.load("./model/model_africa_maize.pt", map_location="cpu")
-)
+
+year_scaler = MinMaxScaler()
+year_scaler.fit(dataset[["year"]])
+
+
+model = LSTMModel(input_size=len(FEATURES))
+model.load_state_dict(torch.load("./model/best_model_weights.pt", map_location="cpu"))
 model.eval()
+
 
 # API
 app = FastAPI(
@@ -135,101 +143,91 @@ def list_countries():
     return {"countries": sorted(dataset["country"].unique().tolist())}
 
 
-@app.get("/prices/{country}")
-def get_country_prices(country: str):
+@app.get("/rendement/{country}")
+def get_country_rendement(country: str):
     if country not in dataset["country"].unique():
         available = sorted(dataset["country"].unique().tolist())
         return {"error": f"Pays '{country}' inconnu. Pays disponibles : {available}"}
 
-    country_prices = dataset[
+    country_rendement = dataset[
         dataset["country"] == country
     ][["year", TARGET]].sort_values("year")
 
-    prices = [
-        {"year": int(row["year"]), "price": float(row[TARGET])}
-        for _, row in country_prices.iterrows()
+    rendement = [
+        {"year": int(row["year"]), "rendement": float(row[TARGET])}
+        for _, row in country_rendement.iterrows()
     ]
 
     return {
         "country": country,
-        "prices": prices,
+        "rendement": rendement,
     }
 
 
 @app.post("/predict")
 def predict(request: PredictionRequest):
-    try:
-        country = request.country
-        annee   = request.year
 
-        # Vérification pays
-        if country not in scalers_per_country:
-            available = sorted(scalers_per_country.keys())
-            return {"error": f"Pays '{country}' inconnu. Pays disponibles : {available}"}
+    country = request.country
+    annee = request.year
 
-        scaler = scalers_per_country[country]
-        n_cols = len(FEATURES_TO_SCALE) + 1  # features scalées + target
+    scaler = scalers_per_country[country]
 
-        # Données normalisées du pays
-        country_data_norm = dataset_normalized[
-            dataset_normalized["country"] == country
-        ].sort_values("year")
+    country_data_norm = dataset_normalized[
+        dataset_normalized["country"] == country
+    ].sort_values("year")
 
-        last_known_year = int(dataset[dataset["country"] == country]["year"].max())
+    last_year = int(dataset[dataset["country"] == country]["year"].max())
 
-        # Vérification année
-        if annee <= last_known_year:
-            return {
-                "error": f"L'année {annee} est déjà dans les données. "
-                         f"Choisir une année > {last_known_year}."
-            }
+    if annee <= last_year:
+        return {"error": "année invalide"}
 
-        if len(country_data_norm) < SEQUENCE_LENGTH:
-            return {
-                "error": f"Pas assez de données pour {country} "
-                         f"(besoin de {SEQUENCE_LENGTH} ans, disponible : {len(country_data_norm)})."
-            }
+    values = country_data_norm[FEATURES].values
 
-        # Séquence initiale = dernières SEQUENCE_LENGTH années connues (normalisées)
-        sequence     = country_data_norm[FEATURES].values[-SEQUENCE_LENGTH:].copy()
-        year_col_idx = FEATURES.index("year")
+    sequence = values[-SEQUENCE_LENGTH:].copy()
 
-        predictions = []
+    year_idx = FEATURES.index("year")
+    lag1 = FEATURES.index("yield_t_ha_lag1")
+    lag2 = FEATURES.index("yield_t_ha_lag2")
+    lag3 = FEATURES.index("yield_t_ha_lag3")
+    delta = FEATURES.index("yield_t_ha_delta")
 
-        # Forecast itératif : prédit year par year depuis last_known+1 jusqu'à annee
-        for year in range(last_known_year + 1, annee + 1):
+    preds = []
 
-            input_tensor = torch.tensor(
-                sequence, dtype=torch.float32
-            ).unsqueeze(0)  # (1, seq_len, n_features)
+    for year in range(last_year + 1, annee + 1):
 
-            with torch.no_grad():
-                pred_scaled = model(input_tensor).cpu().numpy()[0, 0]
+        x = torch.tensor(sequence, dtype=torch.float32).unsqueeze(0)
 
-            # Inverse transform → vrai prix USD/tonne
-            dummy = np.zeros((1, n_cols))
-            dummy[0, -1] = pred_scaled
-            predicted_value = float(scaler.inverse_transform(dummy)[0, -1])
+        with torch.no_grad():
+            pred_scaled = model(x).cpu().numpy()[0, 0]
 
-            predictions.append({
-                "year":            year,
-                "predicted_price": round(predicted_value, 2),
-            })
+        dummy = np.zeros((1, len(features_to_scale) + 1))
+        dummy[0, -1] = pred_scaled
 
-            # Mise à jour séquence pour l'itération suivante
-            new_row = sequence[-1].copy()
-            new_row[year_col_idx] = float(year_scaler.transform([[year]])[0, 0])
-            sequence = np.vstack([sequence[1:], new_row])
+        pred = scaler.inverse_transform(dummy)[0, -1]
 
-        return {
-            "country":         country,
-            "last_known_year": last_known_year,
-            "forecast":        predictions,
-        }
+        preds.append({"year": year, "pred": float(pred)})
 
-    except Exception as e:
-        return {"error": str(e)}
+        prev = sequence[-1].copy()
+        new = prev.copy()
+
+        new[year_idx] = year_scaler.transform(pd.DataFrame({"year":[year]}))[0,0]
+
+        old1 = prev[lag1]
+        old2 = prev[lag2]
+
+        new[lag3] = old2
+        new[lag2] = old1
+        new[lag1] = pred_scaled
+        new[delta] = pred_scaled - old1
+
+        sequence = np.vstack([sequence[1:], new])
+
+    return {
+        "country": country,
+        "last_year": last_year,
+        "forecast": preds
+    }
 
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("api:app", host="127.0.0.1", port=8000)

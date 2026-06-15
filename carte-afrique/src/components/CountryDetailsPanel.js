@@ -4,8 +4,8 @@ import {
   ResponsiveContainer, CartesianGrid, ReferenceLine, Legend,
 } from 'recharts';
 
-/* const API_BASE = 'http://127.0.0.1:8000'; */
-const API_BASE = 'https://iageneratif-model-sonwa.hf.space';
+const API_BASE = 'http://127.0.0.1:8000';
+/* const API_BASE = 'https://iageneratif-model-sonwa.hf.space'; */
 
 const LAST_DATA_YEAR = 2024;
 const CURRENT_YEAR = 2026;
@@ -56,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <p className="text-text-secondary mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }} className="font-medium">
-          {p.name} : {Number(p.value).toFixed(1)} USD/t
+          {p.name} : {Number(p.value).toFixed(1)} t/ha
         </p>
       ))}
     </div>
@@ -87,7 +87,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
 
-  // Données brutes de l'API : { prices: [{year, price}], prixActuel, variation, bridge: [{year, predicted_price}] }
+  // Données brutes de l'API : { rendement: [{year, price}], prixActuel, variation, bridge: [{year, predicted_price}] }
   const [apiData, setApiData]               = useState(null);
   const [loadingHistorique, setLoadingHistorique] = useState(false);
 
@@ -103,18 +103,18 @@ export default function CountryDetailsPanel({ selectedCountry }) {
     const apiName = FR_TO_API[selectedCountry.name] || selectedCountry.name;
 
     // 1. Historique réel
-    fetch(`${API_BASE}/prices/${encodeURIComponent(apiName)}`)
+    fetch(`${API_BASE}/rendement/${encodeURIComponent(apiName)}`)
       .then(res => res.json())
       .then(async (data) => {
-        const prices = data.prices || [];
+        const rendement = data.rendement || [];
 
         // Prix actuel = dernier point du dataset (2024)
-        const sorted = [...prices].sort((a, b) => a.year - b.year);
+        const sorted = [...rendement].sort((a, b) => a.year - b.year);
         const lastEntry  = sorted[sorted.length - 1];
         const prevEntry  = sorted[sorted.length - 2];
-        const prixActuel = lastEntry?.price ?? null;
-        const variation  = (prixActuel && prevEntry?.price)
-          ? ((prixActuel - prevEntry.price) / prevEntry.price * 100)
+        const prixActuel = lastEntry?.rendement ?? null;
+        const variation  = (prixActuel && prevEntry?.rendement)
+          ? ((prixActuel - prevEntry.rendement) / prevEntry.rendement * 100)
           : null;
 
         // 2. Bridge automatique 2025 → 2026 (années manquantes jusqu'à aujourd'hui)
@@ -132,7 +132,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
           }
         } catch (_) { /* bridge optionnel */ }
 
-        setApiData({ prices: sorted, prixActuel, variation, bridge });
+        setApiData({ rendement: sorted, prixActuel, variation, bridge });
       })
       .catch(() => setApiData(null))
       .finally(() => setLoadingHistorique(false));
@@ -157,7 +157,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setForecast({ lastKnownYear: json.last_known_year, data: json.forecast });
+      setForecast({ lastKnownYear: json.last_year, data: json.forecast });
     } catch (e) {
       setError(e.message || 'Erreur de connexion à l\'API');
     } finally {
@@ -167,22 +167,22 @@ export default function CountryDetailsPanel({ selectedCountry }) {
 
   // ─── Données graphique unifié ───────────────────────────────────────────────
   // Points réels (jusqu'à 2024)
-  const reelPoints = (apiData?.prices || []).map(p => ({
+  const reelPoints = (apiData?.rendement || []).map(p => ({
     periode: String(p.year),
-    reel: p.price,
+    reel: p.rendement,
   }));
 
   // Points bridge (2025-2026, prédits automatiquement)
   const bridgePoints = (apiData?.bridge || []).map(p => ({
     periode: String(p.year),
-    bridge: p.predicted_price,
+    bridge: p.pred,
   }));
 
   // Points prédiction manuelle (> 2026)
   const predPoints = forecast
     ? forecast.data
         .filter(f => f.year > CURRENT_YEAR)
-        .map(f => ({ periode: String(f.year), prediction: f.predicted_price }))
+        .map(f => ({ periode: String(f.year), prediction: f.pred }))
     : [];
 
   // Fusion par période sur un seul tableau
@@ -227,7 +227,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
   // Delta prédiction finale vs prix 2024
   const lastPred = forecast?.data?.[forecast.data.length - 1];
   const delta = (lastPred && apiData?.prixActuel)
-    ? ((lastPred.predicted_price - apiData.prixActuel) / apiData.prixActuel * 100)
+    ? ((lastPred.pred - apiData.prixActuel) / apiData.prixActuel * 100)
     : null;
 
   //  État vide
@@ -259,7 +259,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
       {/* Prix actuel 2024 */}
       <div className="bg-bg-tertiary rounded-xl p-4 border border-border flex-shrink-0">
         <p className="text-text-secondary text-xs uppercase tracking-wide mb-1">
-          Dernier prix connu ({LAST_DATA_YEAR})
+          Dernier Rendement connu ({LAST_DATA_YEAR})
         </p>
         {loadingHistorique ? (
           <p className="text-text-secondary text-sm"><SpinIcon /> Chargement...</p>
@@ -267,7 +267,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
           <>
             <p className="text-3xl font-bold text-accent-green">
               {apiData?.prixActuel != null ? Number(apiData.prixActuel).toFixed(1) : '—'}
-              <span className="text-base font-normal text-text-secondary ml-1">USD/t</span>
+              <span className="text-base font-normal text-text-secondary ml-1">t/ha</span>
             </p>
             {apiData?.variation != null && (
               <p className={`mt-1.5 text-sm ${apiData.variation >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
@@ -401,11 +401,11 @@ export default function CountryDetailsPanel({ selectedCountry }) {
           <div className="space-y-3">
             <div className="bg-bg-secondary border border-border rounded-xl p-3">
               <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
-                Prix prédit en {targetYear}
+                Rendement prédit en {targetYear}
               </p>
               <p className="text-2xl font-bold text-accent-green">
-                {Number(lastPred.predicted_price).toFixed(1)}
-                <span className="text-sm font-normal text-text-secondary ml-1">USD/t</span>
+                {Number(lastPred.pred).toFixed(1)}
+                <span className="text-sm font-normal text-text-secondary ml-1">t/ha</span>
               </p>
               {delta !== null && (
                 <p className={`text-xs mt-1 ${delta >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
@@ -430,7 +430,7 @@ export default function CountryDetailsPanel({ selectedCountry }) {
                   <span className={f.year === targetYear ? 'text-accent-green' : 'text-text-secondary'}>
                     {f.year}
                   </span>
-                  <span className="text-right text-text-primary">{Number(f.predicted_price).toFixed(1)} USD/t</span>
+                  <span className="text-right text-text-primary">{Number(f.pred).toFixed(1)} t/ha</span>
                 </div>
               ))}
             </div>

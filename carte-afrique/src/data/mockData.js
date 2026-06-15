@@ -1,16 +1,16 @@
 // src/data/mockData.js
 // Données fixes + chargement dynamique des 33 pays depuis l'API
 
-/* const API_BASE = 'http://127.0.0.1:8000'; */
-const API_BASE = 'https://iageneratif-model-sonwa.hf.space';
+const API_BASE = 'http://127.0.0.1:8000';
+/* const API_BASE = 'https://iageneratif-model-sonwa.hf.space'; */
 
 // Template par défaut pour les pays sans données spécifiques
 const getDefaultCountryData = (countryName, countryCode) => ({
   id: countryCode,
   name: countryName,
   flag: '🌍',
-  currency: 'USD',
-  unit: 'USD/t',
+  currency: 't/ha',
+  unit: 't/ha',
   city: 'N/A',
   priceLevel: 'medium',
   prixActuel: 0,
@@ -113,15 +113,6 @@ export const PRICE_COLORS = {
   default: '#21262D',   // pays sans données
 };
 
-// Fonction pour calculer priceLevel depuis un prix
-export const getPriceLevel = (price) => {
-  if (!price || price <= 0) return 'default';
-  if (price > 400)  return 'vhigh';
-  if (price > 350)  return 'high';
-  if (price > 300)  return 'medium';
-  if (price > 250)  return 'low';
-  return 'vlow';
-};
 
 // Fonction pour trouver le nom correct du pays dans les données chargées
 export const getCountryFromGeoName = (geoName, countriesData, countryNameMap) => {
@@ -198,14 +189,15 @@ export const loadAllCountries = async () => {
     // 1. Charger tous les prix en parallèle
     const pricesResults = await Promise.allSettled(
       countries.map(async (countryName) => {
-        const r = await fetch(`${API_BASE}/prices/${encodeURIComponent(countryName)}`);
+        const r = await fetch(`${API_BASE}/rendement/${encodeURIComponent(countryName)}`);
         const data = await r.json();
-        const prices = (data.prices || []).sort((a, b) => a.year - b.year);
+        const rendement = data.rendement || [];
+        const prices = [...rendement].sort((a, b) => a.year - b.year);
         const lastEntry = prices[prices.length - 1];
         const prevEntry = prices[prices.length - 2];
-        const prixActuel = lastEntry?.price ?? null;
-        const variation = (prixActuel && prevEntry?.price)
-          ? ((prixActuel - prevEntry.price) / prevEntry.price * 100)
+        const prixActuel = lastEntry?.rendement ?? null;
+        const variation = (prixActuel && prevEntry?.rendement)
+          ? ((prixActuel - prevEntry.rendement) / prevEntry.rendement * 100)
           : 0;
         return { countryName, prixActuel, variation };
       })
